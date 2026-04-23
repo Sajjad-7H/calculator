@@ -1,76 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Advanced Calculator</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#0f0f13"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <title>Calculator</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
       background: #0f0f13;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      padding: 1rem;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      touch-action: manipulation;
     }
 
-    .calc {
-      background: #1a1a24;
-      border: 1px solid #2e2e3e;
-      border-radius: 20px;
-      width: 360px;
-      overflow: hidden;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      background: #0f0f13;
     }
 
     /* TABS */
     .tabs {
       display: flex;
-      border-bottom: 1px solid #2e2e3e;
       background: #13131c;
+      border-bottom: 1px solid #2e2e3e;
+      flex-shrink: 0;
+      padding-top: env(safe-area-inset-top);
     }
     .tab {
       flex: 1;
-      padding: 11px 0;
-      font-size: 12px;
-      letter-spacing: 0.04em;
-      color: #666;
+      padding: 14px 0 12px;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #555;
       background: transparent;
       border: none;
       cursor: pointer;
       font-family: inherit;
-      transition: color 0.2s;
-      text-transform: uppercase;
+      font-weight: 500;
+      position: relative;
     }
-    .tab:hover { color: #aaa; }
-    .tab.active {
-      color: #a78bfa;
-      border-bottom: 2px solid #a78bfa;
-      font-weight: 600;
+    .tab.active { color: #a78bfa; }
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 15%; right: 15%;
+      height: 2px;
+      background: #a78bfa;
+      border-radius: 2px 2px 0 0;
     }
 
     /* DISPLAY */
     .display {
       background: #13131c;
-      padding: 18px 20px 14px;
-      min-height: 96px;
+      padding: 16px 20px 14px;
+      flex-shrink: 0;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
+      min-height: 100px;
+      border-bottom: 1px solid #1e1e2a;
     }
     .expr {
-      font-size: 13px;
-      color: #555;
-      min-height: 20px;
+      font-size: 14px;
+      color: #444;
       text-align: right;
       font-family: 'Courier New', monospace;
       word-break: break-all;
+      min-height: 20px;
+      margin-bottom: 2px;
     }
     .result {
-      font-size: 36px;
+      font-size: clamp(28px, 8vw, 42px);
       font-weight: 300;
       color: #f0f0f5;
       text-align: right;
@@ -82,138 +94,210 @@
     }
 
     /* PANELS */
-    .panel { display: none; }
-    .panel.active { display: block; }
+    .panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+    .panel.active { display: flex; }
 
     /* KEYS */
     .keys {
-      padding: 14px;
+      flex: 1;
       display: grid;
-      gap: 9px;
+      padding: 12px;
+      gap: 10px;
+      align-content: stretch;
     }
-    .keys.std { grid-template-columns: repeat(4, 1fr); }
-    .keys.sci { grid-template-columns: repeat(5, 1fr); }
+    .keys.std { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(5, 1fr); }
 
+    /* BUTTONS */
     .k {
-      height: 54px;
-      border-radius: 10px;
-      border: 1px solid #2a2a38;
-      background: #22222e;
-      color: #ddd;
-      font-size: 17px;
+      border-radius: 12px;
+      border: 1px solid #252535;
+      background: #1e1e2c;
+      color: #e0e0e8;
+      font-size: clamp(14px, 4vw, 20px);
       font-family: inherit;
       cursor: pointer;
-      transition: background 0.1s, transform 0.08s;
       user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+      -webkit-user-select: none;
     }
-    .k:hover { background: #2a2a3a; }
-    .k:active { transform: scale(0.94); background: #1e1e2a; }
+    .k:active { transform: scale(0.92); background: #181826; }
 
-    .k.gray { background: #1c1c28; color: #888; font-size: 14px; }
-    .k.gray:hover { background: #252530; }
+    .k.gray  { background: #18182a; color: #888; font-size: clamp(12px, 3.5vw, 16px); }
+    .k.gray:active { background: #131320; }
 
-    .k.op { background: #2a1f4a; color: #a78bfa; font-weight: 500; border-color: #3a2a6a; }
-    .k.op:hover { background: #32255a; }
+    .k.op    { background: #251e48; color: #b39dfa; font-weight: 600; border-color: #362a68; }
+    .k.op:active { background: #1e1838; }
 
-    .k.eq { background: #7c3aed; color: #fff; font-weight: 600; border-color: #7c3aed; font-size: 20px; }
-    .k.eq:hover { background: #6d28d9; }
+    .k.eq    { background: #7c3aed; color: #fff; font-weight: 700; border-color: #6d28d9; font-size: clamp(18px, 5vw, 24px); }
+    .k.eq:active { background: #5b21b6; }
 
-    .k.fn { background: #1c1c28; color: #9ca3af; font-size: 12px; letter-spacing: 0.02em; }
-    .k.fn:hover { background: #252532; color: #d1d5db; }
+    .k.fn    { background: #16162a; color: #8b95a8; font-size: clamp(10px, 2.8vw, 13px); }
+    .k.fn:active { background: #1c1c32; color: #c5ccd8; }
 
-    /* SCIENTIFIC EXTRA ROW */
-    .sci-extra {
+    /* SCIENTIFIC */
+    .sci-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .sci-fn-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 9px;
-      padding: 14px 14px 0;
+      gap: 8px;
+      padding: 10px 12px 6px;
+      flex-shrink: 0;
+    }
+    .sci-fn-grid .k { min-height: 44px; }
+    .sci-num-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      padding: 0 12px 12px;
+      align-content: stretch;
     }
 
     /* CONVERTER */
-    .conv-body { padding: 14px; }
-    .conv-body select {
+    .conv-scroll {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 14px;
+    }
+    .conv-scroll::-webkit-scrollbar { display: none; }
+
+    .conv-type-sel {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #2e2e3e;
+      background: #18182a;
+      color: #ccc;
+      font-size: 15px;
+      font-family: inherit;
+      margin-bottom: 14px;
+      appearance: none;
+      outline: none;
+    }
+    .conv-block {
+      background: #18182a;
+      border: 1px solid #252535;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .conv-block label {
+      font-size: 10px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .conv-block select {
       width: 100%;
       padding: 9px 12px;
       border-radius: 10px;
       border: 1px solid #2e2e3e;
-      background: #1a1a24;
+      background: #13131c;
       color: #ccc;
       font-size: 14px;
       font-family: inherit;
-      margin-bottom: 12px;
       appearance: none;
-      cursor: pointer;
       outline: none;
+      margin-bottom: 8px;
     }
-    .conv-body select:focus { border-color: #7c3aed; }
-
-    .conv-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
-    .conv-group { display: flex; flex-direction: column; gap: 6px; }
-    .conv-group label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.08em; }
-    .conv-group select { margin-bottom: 0; }
-    .conv-group input {
+    .conv-block input {
       width: 100%;
-      padding: 10px 12px;
+      padding: 10px 14px;
       border-radius: 10px;
       border: 1px solid #2e2e3e;
-      background: #13131c;
+      background: #0f0f1a;
       color: #f0f0f5;
-      font-size: 20px;
+      font-size: clamp(20px, 5vw, 26px);
       font-family: 'Courier New', monospace;
       text-align: right;
       outline: none;
     }
-    .conv-group input:focus { border-color: #7c3aed; }
-    .conv-group input[readonly] { color: #a78bfa; }
-    .conv-arrow {
-      text-align: center;
-      font-size: 22px;
-      color: #444;
-      padding: 4px 0;
+    .conv-block input[readonly] { color: #a78bfa; }
+    .conv-swap {
+      display: flex;
+      justify-content: center;
+      margin: 4px 0;
     }
+    .conv-swap button {
+      background: #252535;
+      border: 1px solid #333348;
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      color: #888;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .conv-swap button:active { background: #2e2e48; color: #a78bfa; }
 
     /* HISTORY */
-    .hist { padding: 10px; max-height: 280px; overflow-y: auto; }
-    .hist::-webkit-scrollbar { width: 4px; }
-    .hist::-webkit-scrollbar-track { background: transparent; }
-    .hist::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    .hist-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .hist-list {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 10px 12px;
+    }
+    .hist-list::-webkit-scrollbar { width: 3px; }
+    .hist-list::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
     .hist-item {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      padding: 8px 10px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-family: 'Courier New', monospace;
-      gap: 8px;
-    }
-    .hist-item:hover { background: #1e1e2a; }
-    .hist-expr { color: #555; font-size: 12px; }
-    .hist-res { color: #a78bfa; font-weight: 600; }
-    .no-hist { text-align: center; font-size: 13px; color: #444; padding: 3rem 0; }
-    .hist-clear {
-      display: block;
-      width: calc(100% - 28px);
-      margin: 0 14px 14px;
-      padding: 9px;
-      background: transparent;
-      border: 1px solid #2e2e3e;
+      padding: 10px 12px;
       border-radius: 10px;
+      margin-bottom: 4px;
+      gap: 10px;
+    }
+    .hist-item:active { background: #1e1e2a; }
+    .hist-expr { color: #4a4a60; font-size: 13px; font-family: 'Courier New', monospace; flex: 1; }
+    .hist-res  { color: #a78bfa; font-size: 15px; font-weight: 600; font-family: 'Courier New', monospace; white-space: nowrap; }
+    .no-hist   { text-align: center; color: #333; font-size: 14px; padding: 4rem 0; }
+    .hist-clear {
+      flex-shrink: 0;
+      margin: 0 12px 12px;
+      padding: 13px;
+      background: transparent;
+      border: 1px solid #2a2a3a;
+      border-radius: 12px;
       color: #555;
-      font-size: 13px;
+      font-size: 14px;
       font-family: inherit;
       cursor: pointer;
-      transition: all 0.2s;
     }
-    .hist-clear:hover { border-color: #7c3aed; color: #a78bfa; }
+    .hist-clear:active { border-color: #7c3aed; color: #a78bfa; }
+
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom); flex-shrink: 0; }
+
+    /* DESKTOP */
+    @media (min-width: 520px) {
+      body { display: flex; align-items: center; justify-content: center; overflow: auto; }
+      html, body { height: auto; min-height: 100%; }
+      .app {
+        height: auto;
+        min-height: 640px;
+        max-height: 840px;
+        border-radius: 22px;
+        border: 1px solid #2e2e3e;
+        overflow: hidden;
+        box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+        margin: 2rem auto;
+      }
+      .panel.active { display: flex; min-height: 440px; }
+    }
   </style>
 </head>
 <body>
-
-<div class="calc">
+<div class="app">
   <div class="tabs">
     <button class="tab active" onclick="switchTab('std')">Basic</button>
-    <button class="tab" onclick="switchTab('sci')">Scientific</button>
+    <button class="tab" onclick="switchTab('sci')">Science</button>
     <button class="tab" onclick="switchTab('conv')">Convert</button>
     <button class="tab" onclick="switchTab('hist')">History</button>
   </div>
@@ -246,62 +330,67 @@
       <button class="k" onclick="num('3')">3</button>
       <button class="k op" onclick="op('+')">+</button>
 
-      <button class="k" style="grid-column:span 2" onclick="num('0')">0</button>
+      <button class="k gray" onclick="backspace()">⌫</button>
+      <button class="k" onclick="num('0')">0</button>
       <button class="k" onclick="dot()">.</button>
       <button class="k eq" onclick="equals()">=</button>
     </div>
+    <div class="safe-bottom"></div>
   </div>
 
   <!-- SCIENTIFIC -->
   <div id="panel-sci" class="panel">
-    <div class="sci-extra">
-      <button class="k fn" onclick="sciFn('sin')">sin</button>
-      <button class="k fn" onclick="sciFn('cos')">cos</button>
-      <button class="k fn" onclick="sciFn('tan')">tan</button>
-      <button class="k fn" onclick="sciFn('log')">log</button>
-      <button class="k fn" onclick="sciFn('ln')">ln</button>
-      <button class="k fn" onclick="sciFn('sqrt')">√x</button>
-      <button class="k fn" onclick="sciFn('sq')">x²</button>
-      <button class="k fn" onclick="sciFn('cube')">x³</button>
-      <button class="k fn" onclick="sciFn('inv')">1/x</button>
-      <button class="k fn" onclick="sciFn('abs')">|x|</button>
-      <button class="k fn" onclick="sciFn('pi')">π</button>
-      <button class="k fn" onclick="sciFn('e')">e</button>
-      <button class="k fn" onclick="sciFn('fact')">n!</button>
-      <button class="k fn" onclick="op('^')">xʸ</button>
-      <button class="k fn" onclick="sciFn('exp')">10ˣ</button>
+    <div class="sci-wrap">
+      <div class="sci-fn-grid">
+        <button class="k fn" onclick="sciFn('sin')">sin</button>
+        <button class="k fn" onclick="sciFn('cos')">cos</button>
+        <button class="k fn" onclick="sciFn('tan')">tan</button>
+        <button class="k fn" onclick="sciFn('log')">log</button>
+        <button class="k fn" onclick="sciFn('ln')">ln</button>
+        <button class="k fn" onclick="sciFn('sqrt')">√x</button>
+        <button class="k fn" onclick="sciFn('sq')">x²</button>
+        <button class="k fn" onclick="sciFn('cube')">x³</button>
+        <button class="k fn" onclick="sciFn('inv')">1/x</button>
+        <button class="k fn" onclick="sciFn('abs')">|x|</button>
+        <button class="k fn" onclick="sciFn('pi')">π</button>
+        <button class="k fn" onclick="sciFn('e')">e</button>
+        <button class="k fn" onclick="sciFn('fact')">n!</button>
+        <button class="k fn" onclick="op('^')">xʸ</button>
+        <button class="k fn" onclick="sciFn('exp')">10ˣ</button>
+      </div>
+      <div class="sci-num-grid">
+        <button class="k gray" onclick="clearAll()">AC</button>
+        <button class="k gray" onclick="backspace()">⌫</button>
+        <button class="k gray" onclick="percent()">%</button>
+        <button class="k op"   onclick="op('/')">÷</button>
+        <button class="k op"   onclick="op('*')">×</button>
+
+        <button class="k" onclick="num('7')">7</button>
+        <button class="k" onclick="num('8')">8</button>
+        <button class="k" onclick="num('9')">9</button>
+        <button class="k op" onclick="op('-')">−</button>
+        <button class="k op" onclick="op('+')">+</button>
+
+        <button class="k" onclick="num('4')">4</button>
+        <button class="k" onclick="num('5')">5</button>
+        <button class="k" onclick="num('6')">6</button>
+        <button class="k" onclick="num('1')">1</button>
+        <button class="k" onclick="num('2')">2</button>
+
+        <button class="k" onclick="num('3')">3</button>
+        <button class="k" onclick="dot()">.</button>
+        <button class="k" onclick="num('0')">0</button>
+        <button class="k gray" onclick="toggleSign()">+/−</button>
+        <button class="k eq" onclick="equals()">=</button>
+      </div>
     </div>
-    <div class="keys sci" style="padding-top:10px;">
-      <button class="k gray" onclick="clearAll()">AC</button>
-      <button class="k gray" onclick="backspace()">⌫</button>
-      <button class="k gray" onclick="percent()">%</button>
-      <button class="k op"   onclick="op('/')">÷</button>
-      <button class="k op"   onclick="op('*')">×</button>
-
-      <button class="k" onclick="num('7')">7</button>
-      <button class="k" onclick="num('8')">8</button>
-      <button class="k" onclick="num('9')">9</button>
-      <button class="k op" onclick="op('-')">−</button>
-      <button class="k op" onclick="op('+')">+</button>
-
-      <button class="k" onclick="num('4')">4</button>
-      <button class="k" onclick="num('5')">5</button>
-      <button class="k" onclick="num('6')">6</button>
-      <button class="k" onclick="num('1')">1</button>
-      <button class="k" onclick="num('2')">2</button>
-
-      <button class="k" onclick="num('3')">3</button>
-      <button class="k" onclick="dot()">.</button>
-      <button class="k" onclick="num('0')">0</button>
-      <button class="k gray" onclick="toggleSign()">+/−</button>
-      <button class="k eq" onclick="equals()">=</button>
-    </div>
+    <div class="safe-bottom"></div>
   </div>
 
   <!-- CONVERTER -->
   <div id="panel-conv" class="panel">
-    <div class="conv-body">
-      <select id="conv-type" onchange="populateConv()">
+    <div class="conv-scroll">
+      <select id="conv-type" class="conv-type-sel" onchange="populateConv()">
         <option value="len">Length</option>
         <option value="wt">Weight / Mass</option>
         <option value="temp">Temperature</option>
@@ -314,206 +403,160 @@
         <option value="pres">Pressure</option>
       </select>
 
-      <div class="conv-row">
-        <div class="conv-group">
-          <label>From</label>
-          <select id="conv-from" onchange="convUpdate()"></select>
-        </div>
-        <div class="conv-group">
-          <label>To</label>
-          <select id="conv-to" onchange="convUpdate()"></select>
-        </div>
+      <div class="conv-block">
+        <label>From</label>
+        <select id="conv-from" onchange="convUpdate()"></select>
+        <input id="conv-in" type="number" inputmode="decimal" value="1" oninput="convUpdate()" placeholder="0">
       </div>
 
-      <div class="conv-group" style="margin-bottom:8px;">
-        <label>Input value</label>
-        <input id="conv-in" type="number" value="1" oninput="convUpdate()" placeholder="0">
+      <div class="conv-swap">
+        <button onclick="swapConv()">⇅</button>
       </div>
 
-      <div class="conv-arrow">↓</div>
-
-      <div class="conv-group">
-        <label>Result</label>
+      <div class="conv-block">
+        <label>To</label>
+        <select id="conv-to" onchange="convUpdate()"></select>
         <input id="conv-out" type="number" readonly placeholder="0">
       </div>
     </div>
+    <div class="safe-bottom"></div>
   </div>
 
   <!-- HISTORY -->
   <div id="panel-hist" class="panel">
-    <div class="hist" id="hist-list">
-      <div class="no-hist">No calculations yet</div>
+    <div class="hist-wrap">
+      <div class="hist-list" id="hist-list">
+        <div class="no-hist">No calculations yet</div>
+      </div>
+      <button class="hist-clear" onclick="clearHistory()">Clear history</button>
     </div>
-    <button class="hist-clear" onclick="clearHistory()">Clear history</button>
+    <div class="safe-bottom"></div>
   </div>
 </div>
 
 <script>
-  /* ── STATE ── */
-  let cur = '0', expr = '', waitNext = false, history = [];
+let cur = '0', expr = '', waitNext = false, history = [];
+const $ = id => document.getElementById(id);
 
-  const $ = id => document.getElementById(id);
-
-  function updateDisplay() {
-    $('result').textContent = cur.length > 13 ? parseFloat(cur).toPrecision(9) : cur;
-    $('expr').textContent = expr;
-  }
-
-  /* ── INPUT ── */
-  function num(n) {
-    if (waitNext) { cur = n; waitNext = false; }
-    else cur = cur === '0' ? n : cur + n;
-    updateDisplay();
-  }
-  function dot() {
-    if (waitNext) { cur = '0.'; waitNext = false; }
-    else if (!cur.includes('.')) cur += '.';
-    updateDisplay();
-  }
-  function op(o) {
-    if (expr && !waitNext) {
-      try { cur = String(safeEval(exprForEval(expr) + cur)); } catch(e) {}
-    }
-    const sym = { '/':'÷', '*':'×', '^':'ˣ' }[o] || o;
-    expr = cur + ' ' + sym + ' ';
-    waitNext = true;
-    updateDisplay();
-  }
-  function equals() {
-    if (!expr) return;
-    const full = expr + cur;
-    try {
-      const res = safeEval(exprForEval(expr) + cur);
-      const rounded = parseFloat(res.toPrecision(12));
-      addHistory(full + ' = ' + rounded);
-      cur = String(rounded); expr = ''; waitNext = true;
-    } catch(e) { cur = 'Error'; }
-    updateDisplay();
-  }
-  function clearAll()   { cur = '0'; expr = ''; waitNext = false; updateDisplay(); }
-  function backspace()  { cur = (waitNext || cur === 'Error') ? '0' : (cur.length > 1 ? cur.slice(0,-1) : '0'); waitNext = false; updateDisplay(); }
-  function toggleSign() { cur = cur.startsWith('-') ? cur.slice(1) : '-' + cur; updateDisplay(); }
-  function percent()    { cur = String(parseFloat(cur) / 100); updateDisplay(); }
-
-  /* ── SAFE EVAL ── */
-  function exprForEval(e) { return e.replace(/÷/g,'/').replace(/×/g,'*').replace(/ˣ/g,'**').replace(/−/g,'-'); }
-  function safeEval(str) { return Function('"use strict";return(' + str + ')')(); }
-
-  /* ── SCIENTIFIC ── */
-  function sciFn(fn) {
-    const v = parseFloat(cur);
-    const map = {
-      sin:   ['sin('+v+'°)',  Math.sin(v * Math.PI/180)],
-      cos:   ['cos('+v+'°)',  Math.cos(v * Math.PI/180)],
-      tan:   ['tan('+v+'°)',  Math.tan(v * Math.PI/180)],
-      log:   ['log('+v+')',   Math.log10(v)],
-      ln:    ['ln('+v+')',    Math.log(v)],
-      sqrt:  ['√('+v+')',     Math.sqrt(v)],
-      sq:    ['('+v+')²',     v*v],
-      cube:  ['('+v+')³',     v*v*v],
-      inv:   ['1/('+v+')',    1/v],
-      abs:   ['|'+v+'|',      Math.abs(v)],
-      fact:  [v+'!',          factorial(v)],
-      exp:   ['10^('+v+')',   Math.pow(10,v)],
-    };
-    if (fn === 'pi') { cur = String(Math.PI); updateDisplay(); return; }
-    if (fn === 'e')  { cur = String(Math.E);  updateDisplay(); return; }
-    const [label, res] = map[fn];
+function updateDisplay() {
+  $('result').textContent = cur.length > 13 ? parseFloat(cur).toPrecision(9) : cur;
+  $('expr').textContent = expr;
+}
+function num(n) {
+  if (waitNext) { cur = n; waitNext = false; }
+  else cur = cur === '0' ? n : cur + n;
+  updateDisplay();
+}
+function dot() {
+  if (waitNext) { cur = '0.'; waitNext = false; }
+  else if (!cur.includes('.')) cur += '.';
+  updateDisplay();
+}
+function op(o) {
+  if (expr && !waitNext) { try { cur = String(safeEval(toMath(expr) + cur)); } catch(e) {} }
+  const sym = {'/':'÷','*':'×','^':'ˣ'}[o] || o;
+  expr = cur + ' ' + sym + ' '; waitNext = true; updateDisplay();
+}
+function equals() {
+  if (!expr) return;
+  const full = expr + cur;
+  try {
+    const res = safeEval(toMath(expr) + cur);
     const rounded = parseFloat(res.toPrecision(12));
-    addHistory(label + ' = ' + rounded);
-    expr = label + ' = ';
-    cur = String(rounded); waitNext = true;
-    updateDisplay();
-  }
-  function factorial(n) {
-    n = Math.floor(n); if (n < 0) return NaN; if (n === 0) return 1;
-    let f = 1; for (let i = 2; i <= n; i++) f *= i; return f;
-  }
+    addHistory(full + ' = ' + rounded);
+    cur = String(rounded); expr = ''; waitNext = true;
+  } catch(e) { cur = 'Error'; }
+  updateDisplay();
+}
+function clearAll()   { cur = '0'; expr = ''; waitNext = false; updateDisplay(); }
+function backspace()  { cur = (waitNext || cur === 'Error') ? '0' : (cur.length > 1 ? cur.slice(0,-1) : '0'); waitNext = false; updateDisplay(); }
+function toggleSign() { cur = cur.startsWith('-') ? cur.slice(1) : '-' + cur; updateDisplay(); }
+function percent()    { cur = String(parseFloat(cur) / 100); updateDisplay(); }
+function toMath(e)    { return e.replace(/÷/g,'/').replace(/×/g,'*').replace(/ˣ/g,'**').replace(/−/g,'-'); }
+function safeEval(s)  { return Function('"use strict";return('+s+')')(); }
 
-  /* ── HISTORY ── */
-  function addHistory(entry) {
-    history.unshift(entry);
-    if (history.length > 50) history.pop();
-  }
-  function clearHistory() { history = []; renderHistory(); }
-  function renderHistory() {
-    const el = $('hist-list');
-    if (!history.length) { el.innerHTML = '<div class="no-hist">No calculations yet</div>'; return; }
-    el.innerHTML = history.map(h => {
-      const i = h.lastIndexOf(' = ');
-      return `<div class="hist-item">
-        <span class="hist-expr">${h.slice(0, i)} =</span>
-        <span class="hist-res">${h.slice(i+3)}</span>
-      </div>`;
-    }).join('');
-  }
-
-  /* ── CONVERTER ── */
-  const convData = {
-    len:    { units: ['Meter','Kilometer','Centimeter','Millimeter','Mile','Yard','Foot','Inch','Nautical mile'], base: [1,1000,0.01,0.001,1609.344,0.9144,0.3048,0.0254,1852] },
-    wt:     { units: ['Kilogram','Gram','Milligram','Pound','Ounce','Ton (metric)','Stone','Carat'], base: [1,0.001,1e-6,0.453592,0.0283495,1000,6.35029,0.0002] },
-    temp:   { units: ['Celsius','Fahrenheit','Kelvin'] },
-    area:   { units: ['Sq meter','Sq kilometer','Sq centimeter','Sq mile','Sq yard','Sq foot','Sq inch','Hectare','Acre'], base: [1,1e6,1e-4,2.59e6,0.836127,0.092903,6.4516e-4,1e4,4046.86] },
-    vol:    { units: ['Liter','Milliliter','Cubic meter','Cubic cm','Gallon (US)','Quart (US)','Pint (US)','Cup (US)','Fluid oz','Tablespoon','Teaspoon'], base: [1,0.001,1000,0.001,3.78541,0.946353,0.473176,0.236588,0.0295735,0.0147868,0.00492892] },
-    spd:    { units: ['m/s','km/h','mph','Knot','ft/s'], base: [1,1/3.6,0.44704,0.514444,0.3048] },
-    time:   { units: ['Second','Minute','Hour','Day','Week','Month (avg)','Year'], base: [1,60,3600,86400,604800,2629800,31557600] },
-    data:   { units: ['Byte','Kilobyte','Megabyte','Gigabyte','Terabyte','Petabyte','Bit','Kilobit','Megabit','Gigabit'], base: [1,1024,1048576,1073741824,1.0995e12,1.1259e15,0.125,128,131072,1.342e8] },
-    energy: { units: ['Joule','Kilojoule','Calorie','Kilocalorie','Watt-hour','Kilowatt-hour','BTU','Electronvolt'], base: [1,1000,4.184,4184,3600,3600000,1055.06,1.602e-19] },
-    pres:   { units: ['Pascal','Kilopascal','Megapascal','Bar','PSI','Atm','mmHg','Torr'], base: [1,1000,1000000,100000,6894.76,101325,133.322,133.322] }
+function sciFn(fn) {
+  const v = parseFloat(cur);
+  if (fn === 'pi') { cur = String(Math.PI); updateDisplay(); return; }
+  if (fn === 'e')  { cur = String(Math.E);  updateDisplay(); return; }
+  const map = {
+    sin:  ['sin('+v+'°)',  Math.sin(v*Math.PI/180)],
+    cos:  ['cos('+v+'°)',  Math.cos(v*Math.PI/180)],
+    tan:  ['tan('+v+'°)',  Math.tan(v*Math.PI/180)],
+    log:  ['log('+v+')',   Math.log10(v)],
+    ln:   ['ln('+v+')',    Math.log(v)],
+    sqrt: ['√('+v+')',     Math.sqrt(v)],
+    sq:   ['('+v+')²',    v*v],
+    cube: ['('+v+')³',    v*v*v],
+    inv:  ['1/('+v+')',    1/v],
+    abs:  ['|'+v+'|',      Math.abs(v)],
+    fact: [v+'!',          factorial(v)],
+    exp:  ['10^('+v+')',   Math.pow(10,v)],
   };
+  const [label, res] = map[fn];
+  const rounded = parseFloat(res.toPrecision(12));
+  addHistory(label + ' = ' + rounded);
+  expr = label + ' = '; cur = String(rounded); waitNext = true; updateDisplay();
+}
+function factorial(n) { n=Math.floor(n); if(n<0)return NaN; if(n===0)return 1; let f=1; for(let i=2;i<=n;i++)f*=i; return f; }
 
-  function populateConv() {
-    const d = convData[$('conv-type').value];
-    [$('conv-from'), $('conv-to')].forEach((sel, i) => {
-      sel.innerHTML = d.units.map((u,j) => `<option value="${j}">${u}</option>`).join('');
-      sel.value = i;
-    });
-    $('conv-to').value = 1;
-    convUpdate();
-  }
-  function convUpdate() {
-    const type = $('conv-type').value;
-    const from = parseInt($('conv-from').value);
-    const to   = parseInt($('conv-to').value);
-    const val  = parseFloat($('conv-in').value) || 0;
-    let result;
-    if (type === 'temp') {
-      let c = from === 0 ? val : from === 1 ? (val-32)*5/9 : val-273.15;
-      result = to === 0 ? c : to === 1 ? c*9/5+32 : c+273.15;
-    } else {
-      const d = convData[type];
-      result = val * d.base[from] / d.base[to];
-    }
-    $('conv-out').value = parseFloat(result.toPrecision(10));
-  }
+function addHistory(e) { history.unshift(e); if(history.length>60)history.pop(); }
+function clearHistory() { history=[]; renderHistory(); }
+function renderHistory() {
+  const el=$('hist-list');
+  if(!history.length){el.innerHTML='<div class="no-hist">No calculations yet</div>';return;}
+  el.innerHTML=history.map(h=>{const i=h.lastIndexOf(' = ');return`<div class="hist-item"><span class="hist-expr">${h.slice(0,i)} =</span><span class="hist-res">${h.slice(i+3)}</span></div>`;}).join('');
+}
 
-  /* ── TAB SWITCH ── */
-  function switchTab(t) {
-    const tabs = ['std','sci','conv','hist'];
-    document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('active', tabs[i] === t));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    $('panel-' + t).classList.add('active');
-    if (t === 'conv')  populateConv();
-    if (t === 'hist')  renderHistory();
-  }
+const convData = {
+  len:    {units:['Meter','Kilometer','Centimeter','Millimeter','Mile','Yard','Foot','Inch','Nautical mile'],base:[1,1000,0.01,0.001,1609.344,0.9144,0.3048,0.0254,1852]},
+  wt:     {units:['Kilogram','Gram','Milligram','Pound','Ounce','Ton (metric)','Stone','Carat'],base:[1,0.001,1e-6,0.453592,0.0283495,1000,6.35029,0.0002]},
+  temp:   {units:['Celsius','Fahrenheit','Kelvin']},
+  area:   {units:['Sq meter','Sq kilometer','Sq centimeter','Sq mile','Sq yard','Sq foot','Sq inch','Hectare','Acre'],base:[1,1e6,1e-4,2.59e6,0.836127,0.092903,6.4516e-4,1e4,4046.86]},
+  vol:    {units:['Liter','Milliliter','Cubic meter','Cubic cm','Gallon (US)','Quart (US)','Pint (US)','Cup (US)','Fluid oz','Tablespoon','Teaspoon'],base:[1,0.001,1000,0.001,3.78541,0.946353,0.473176,0.236588,0.0295735,0.0147868,0.00492892]},
+  spd:    {units:['m/s','km/h','mph','Knot','ft/s'],base:[1,1/3.6,0.44704,0.514444,0.3048]},
+  time:   {units:['Second','Minute','Hour','Day','Week','Month (avg)','Year'],base:[1,60,3600,86400,604800,2629800,31557600]},
+  data:   {units:['Byte','Kilobyte','Megabyte','Gigabyte','Terabyte','Petabyte','Bit','Kilobit','Megabit','Gigabit'],base:[1,1024,1048576,1073741824,1.0995e12,1.1259e15,0.125,128,131072,1.342e8]},
+  energy: {units:['Joule','Kilojoule','Calorie','Kilocalorie','Watt-hour','Kilowatt-hour','BTU','Electronvolt'],base:[1,1000,4.184,4184,3600,3600000,1055.06,1.602e-19]},
+  pres:   {units:['Pascal','Kilopascal','Megapascal','Bar','PSI','Atm','mmHg','Torr'],base:[1,1000,1000000,100000,6894.76,101325,133.322,133.322]}
+};
+function populateConv() {
+  const d=convData[$('conv-type').value];
+  [$('conv-from'),$('conv-to')].forEach((sel,i)=>{sel.innerHTML=d.units.map((u,j)=>`<option value="${j}">${u}</option>`).join('');sel.value=i;});
+  $('conv-to').value=1; convUpdate();
+}
+function convUpdate() {
+  const type=$('conv-type').value,from=parseInt($('conv-from').value),to=parseInt($('conv-to').value),val=parseFloat($('conv-in').value)||0;
+  let result;
+  if(type==='temp'){let c=from===0?val:from===1?(val-32)*5/9:val-273.15;result=to===0?c:to===1?c*9/5+32:c+273.15;}
+  else{const d=convData[type];result=val*d.base[from]/d.base[to];}
+  $('conv-out').value=parseFloat(result.toPrecision(10));
+}
+function swapConv() { const f=$('conv-from').value,t=$('conv-to').value; $('conv-from').value=t; $('conv-to').value=f; convUpdate(); }
 
-  /* ── KEYBOARD SUPPORT ── */
-  document.addEventListener('keydown', e => {
-    const k = e.key;
-    if (k >= '0' && k <= '9') num(k);
-    else if (k === '.') dot();
-    else if (k === '+') op('+');
-    else if (k === '-') op('-');
-    else if (k === '*') op('*');
-    else if (k === '/') { e.preventDefault(); op('/'); }
-    else if (k === 'Enter' || k === '=') equals();
-    else if (k === 'Backspace') backspace();
-    else if (k === 'Escape') clearAll();
-    else if (k === '%') percent();
-  });
+function switchTab(t) {
+  const names=['std','sci','conv','hist'];
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',names[i]===t));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  $('panel-'+t).classList.add('active');
+  if(t==='conv')populateConv();
+  if(t==='hist')renderHistory();
+}
 
-  /* ── INIT ── */
-  populateConv();
+document.addEventListener('keydown',e=>{
+  if(e.key>='0'&&e.key<='9')num(e.key);
+  else if(e.key==='.')dot();
+  else if(e.key==='+')op('+');
+  else if(e.key==='-')op('-');
+  else if(e.key==='*')op('*');
+  else if(e.key==='/'){e.preventDefault();op('/');}
+  else if(e.key==='Enter'||e.key==='=')equals();
+  else if(e.key==='Backspace')backspace();
+  else if(e.key==='Escape')clearAll();
+  else if(e.key==='%')percent();
+});
+
+populateConv();
 </script>
 </body>
 </html>
